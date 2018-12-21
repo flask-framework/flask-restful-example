@@ -5,7 +5,8 @@ import warnings
 def load_urls(app, api):
     """
     加载配置中INSTALL_APP中的所有app的路由
-    :param bind_api: flask api 对象
+    :param api: flask api 对象
+    :param app: flask 应用对象
     :return:
     """
     apps = app.config.get("INSTALL_APPS")

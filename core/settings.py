@@ -4,7 +4,7 @@ from datetime import timedelta
 
 
 INSTALL_APPS = [
-
+    "user",
 ]
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -12,7 +12,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 DEBUG = True
 
 SECRET_KEY = b"\x15\xb8\xa1\xc8\xcb\xf7;\xee\xb46\xc9\xaep\xadld\x8dM\xc6\xc9SV\xefO"
-SQLALCHEMY_DATABASE_URI = "mysql+mysqldb://wxshop:wxshop@10.1.80.29:3307/wxshop?charset=utf8"
+SQLALCHEMY_DATABASE_URI = "postgresql://wxshop:wxshop@127.0.0.1:5432/wxshop"
 SQLALCHEMY_ECHO = False
 SQLALCHEMY_POOL_SIZE = 200
 SQLALCHEMY_TRACK_MODIFICATIONS = True
