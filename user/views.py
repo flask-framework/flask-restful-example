@@ -39,6 +39,59 @@ class Login(Resource):
             return ret
 
 
+class GetGroupsByUser(LoginResource):
+
+    def get(self, user_id):
+        try:
+            groups = dbi.select_groups_by_user_id(user_id=user_id)
+            group_list = []
+            for group in groups:
+                group_list.append({
+                    "id": group.id,
+                    "name": group.name,
+                })
+            ret = {
+                "code": ErrCode.ERR_OK,
+                "message": "Get groups information success!",
+                "groups": group_list
+            }
+            return ret
+        except Exception as e:
+            ret = {
+                "code": ErrCode.ERR_UNKNOWN,
+                "message": str(e)
+            }
+            return ret
+
+
+class GetPermissionsByGroup(LoginResource):
+
+    def get(self):
+        parser = validator.get_permissions_parser()
+        args = parser.parse_args()
+        group_ids = args.get("group_ids")
+        try:
+            perms = dbi.select_permissions_by_group_ids(group_ids=group_ids)
+            perm_list = []
+            for perm in perms:
+                perm_list.append({
+                    "id": perm.id,
+                    "name": perm.name
+                })
+            ret = {
+                "code": ErrCode.ERR_OK,
+                "message": "Get permissions success!",
+                "permissions": perm_list
+            }
+            return ret
+        except Exception as e:
+            ret = {
+                "code": ErrCode.ERR_UNKNOWN,
+                "message": str(e)
+            }
+            return ret
+
+
 class GetSefProfile(LoginResource):
 
     def get(self):
