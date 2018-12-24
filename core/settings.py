@@ -36,3 +36,6 @@ PAGE_SIZE = 20
 # celery
 CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
 CELERY_BACKEND_URL = "redis://127.0.0.1:6379/1"
+
+# 认证配置
+JWT_EXPIRED = timedelta(days=3)

@@ -19,6 +19,12 @@ class User(db.Model):
     create_at = Column(DateTime, default=datetime.now)
     update_at = Column(DateTime, onupdate=datetime.now)
 
+    USERNAME_FILED = "username"
+
+    @property
+    def is_auth(self):
+        return self._is_auth
+
     def check_password(self, password):
         """
         校验密码

@@ -1,7 +1,7 @@
 from flask_restful import Resource
-from flask_login import login_required
+from utils.auth import jwt_required
 
 
 class LoginResource(Resource):
 
-    method_decorators = [login_required]
+    method_decorators = [jwt_required]
