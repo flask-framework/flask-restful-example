@@ -6,6 +6,7 @@ from flask_session import Session
 from core.urls import load_urls
 from flask import make_response
 from utils.exception import AuthException
+from flask_cors import CORS
 
 # 创建app
 app = Flask(__name__)
@@ -26,6 +27,9 @@ babel = Babel(app)
 # 初始化session
 sess = Session()
 sess.init_app(app=app)
+
+# 跨域访问
+CORS(app=app, supports_credentials=True)
 
 
 @app.errorhandler(AuthException)

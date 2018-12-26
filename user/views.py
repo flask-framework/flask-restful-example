@@ -17,11 +17,28 @@ class Login(Resource):
         try:
             user = dbi.select_user_by_username(username=username)
             if user.check_password(password=password):
+                # 查找分组信息
+                group_list = dbi.select_group_by_user_id(user_id=user.id)
+                for group in group_list:
+                    if group.name not in user.roles:
+                        user.roles.append(group.name)
+                # 查找权限信息
+                perm_list = dbi.select_perms_by_group_ids(group_ids=user.roles)
+                for perm in perm_list:
+                    if perm.name not in user.perms:
+                        user.perms.append(perm.name)
                 login_user(user)
                 token = general_token(user)
                 ret = {
                     "code": ErrCode.ERR_OK,
                     "token": token.decode(),
+                    "user": {
+                        "id": user.id,
+                        "username": user.username,
+                        "is_active": user.is_active,
+                        "roles": user.roles,
+                        "perms": user.perms,
+                    },
                     "message": "Login success!"
                 }
                 return ret
@@ -35,6 +52,29 @@ class Login(Resource):
             ret = {
                 "code": ErrCode.ERR_USERNAME_NOT_FOUND,
                 "message": "Username not found!"
+            }
+            return ret
+
+
+class GetUserRoles(LoginResource):
+
+    def get(self, user_id):
+        try:
+            groups = dbi.select_group_by_user_id(user_id=user_id)
+            group_list = []
+            for group in groups:
+                if group.name not in group_list:
+                    group_list.append(group.name)
+            ret = {
+                "code": ErrCode.ERR_OK,
+                "message": "Get roles success!",
+                "roles": group_list
+            }
+            return ret
+        except Exception as e:
+            ret = {
+                "code": ErrCode.ERR_UNKNOWN,
+                "message": str(e)
             }
             return ret
 

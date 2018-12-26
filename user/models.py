@@ -25,6 +25,9 @@ class User(db.Model):
     def is_auth(self):
         return self._is_auth
 
+    roles = []
+    perms = []
+
     def check_password(self, password):
         """
         校验密码
