@@ -56,3 +56,30 @@ def insert_admin_user(username, password, email, phone):
         print(e)
     finally:
         db.session.close()
+
+
+def select_groups_by_user_id(user_id):
+    """
+    根据用户ID 查询分组信息
+    :param user_id: [int] 用户ID
+    :return:
+    """
+    groups = db.session.query(Group).\
+        join(UserGroupRelation, Group.id == UserGroupRelation.group_id).\
+        join(User, UserGroupRelation.user_id == User.id).\
+        filter(User.id == user_id)
+    return groups
+
+
+def select_permissions_by_group_ids(group_ids):
+    """
+    根据分组信息获取权限信息
+    :param group_ids: [list] 分组ID列表
+    :return:
+    """
+    permissions = db.session.query(Perm). \
+        join(GroupPermRelation, GroupPermRelation.perm_id == Perm.id). \
+        join(Group, GroupPermRelation.group_id == Group.id). \
+        filter(Group.id.in_(group_ids)). \
+        group_by(Perm.name)
+    return permissions
