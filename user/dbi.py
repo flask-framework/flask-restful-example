@@ -31,7 +31,7 @@ def select_perms_by_group_ids(group_ids):
     :return:
     """
     perms = db.session.query(Perm).\
-        join(GroupPermRelation, GroupPermRelation.perm_id, Perm.id).\
+        join(GroupPermRelation, GroupPermRelation.perm_id == Perm.id).\
         join(Group, GroupPermRelation.group_id == Group.id).filter(Group.id.in_(group_ids)).all()
     return perms
 
