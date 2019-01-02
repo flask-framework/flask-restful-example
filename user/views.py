@@ -1,4 +1,6 @@
 from flask_restful import Resource
+from flask import request
+from flask_restful.fields import _iso8601
 from utils.resource import LoginResource
 from user import dbi
 from user import validator
@@ -55,6 +57,7 @@ class Login(Resource):
                 "message": "Username not found!"
             }
             return ret
+
 
 class GetGroupsByUser(LoginResource):
 
@@ -120,3 +123,55 @@ class Logout(LoginResource):
 
     def get(self):
         logout()
+        ret = {
+            "code": ErrCode.ERR_OK,
+            "message": "Logout user success!"
+        }
+        return ret
+
+
+class UserList(LoginResource):
+    """
+    获取用户列表，可以使用关键字和角色ID搜索
+    """
+
+    def get(self):
+        keyword = request.args.get("keyword", None)
+        role_id = request.args.get("role_id", None)
+        sort_name = request.args.get("sort_name", None)
+        sort_order = request.args.get("sort_order", None)
+        try:
+            page_num = int(request.args.get("page", 1))
+            page_size = int(request.args.get("page_size", 20))
+        except (TypeError, ValueError):
+            # 传入的参数不是int数据
+            page_num = 1
+            page_size = 20
+        user_list = []
+        info_list = dbi.select_user_list_by_page(page_num=page_num, page_size=page_size, keyword=keyword,
+                                                 role_id=role_id, sort_name=sort_name, sort_order=sort_order)
+        for user in info_list.items:
+            roles = dbi.select_groups_by_user_id(user_id=user.id)
+            role_list = []
+            for role in roles:
+                role_list.append(role.name)
+            user_list.append({
+                "id": user.id,
+                "username": user.username,
+                # "fullname": user.fullname,
+                "email": user.email,
+                "phone": user.phone,
+                "is_active": user.is_active,
+                "is_superuser": user.is_superuser,
+                "roles": ",".join(role_list),
+                # "create_at": _iso8601(user.create_at),
+                # "update_at": _iso8601(user.update_at),
+            })
+        msg = {
+            "code": ErrCode.ERR_OK,
+            "message": "Get user list success",
+            "users": user_list,
+            "pages": info_list.pages,
+            "total": info_list.total
+        }
+        return msg
