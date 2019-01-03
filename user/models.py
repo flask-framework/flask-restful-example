@@ -13,6 +13,7 @@ class User(db.Model):
     username = Column(String(50), unique=True, nullable=False)
     password = Column(String(200), nullable=False)
     is_superuser = Column(Boolean, default=False)
+    fullname = Column(String(100), nullable=True)
     is_active = Column(Boolean, default=True)
     email = Column(String(254), nullable=True, unique=True)
     phone = Column(String(20), nullable=True, unique=True)

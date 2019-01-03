@@ -158,14 +158,14 @@ class UserList(LoginResource):
             user_list.append({
                 "id": user.id,
                 "username": user.username,
-                # "fullname": user.fullname,
+                "fullname": user.fullname,
                 "email": user.email,
                 "phone": user.phone,
                 "is_active": user.is_active,
                 "is_superuser": user.is_superuser,
                 "roles": ",".join(role_list),
-                # "create_at": _iso8601(user.create_at),
-                # "update_at": _iso8601(user.update_at),
+                "create_at": _iso8601(user.create_at),
+                "update_at": _iso8601(user.update_at),
             })
         msg = {
             "code": ErrCode.ERR_OK,
@@ -175,3 +175,104 @@ class UserList(LoginResource):
             "total": info_list.total
         }
         return msg
+
+
+class User(LoginResource):
+
+    def update(self, user_id):
+        parser = validator.update_create_user_info_parser()
+        args = parser.parse_args()
+        fullname = args.pop("fullname")
+        email = args.pop("email")
+        phone = args.pop("phone")
+        # 校验邮箱地址是否存在
+        if dbi.check_unique_field_exist("email", email) is True:
+            ret = {
+                "code": ErrCode.ERR_EMAIL_EXIST,
+                "message": "Email address already exist!"
+            }
+            return ret
+        # 校验手机号码是否存在
+        if dbi.check_unique_field_exist("phone", phone) is True:
+            ret = {
+                "code": ErrCode.ERR_PHONE_EXIST,
+                "message": "Email address already exist!"
+            }
+            return ret
+        # 更新操作
+        try:
+            dbi.update_user_info_by_user_id(user_id=user_id, fullname=fullname, email=email, phone=phone)
+            ret = {
+                "code": ErrCode.ERR_OK,
+                "message": "Update user information success!"
+            }
+            return ret
+        except exception.UserNotFound:
+            ret = {
+                "code": ErrCode.USER_NOT_FOUND,
+                "message": "User not found!"
+            }
+            return ret
+        except Exception as e:
+            ret = {
+                "code": ErrCode.ERR_UNKNOWN,
+                "message": str(e)
+            }
+            return ret
+
+    def get(self, user_id):
+        try:
+            # 查找用户信息
+            user = dbi.select_user_info_by_user_id(user_id=user_id)
+            # 查找用户分组信息
+            roles = dbi.select_groups_by_user_id(user_id=user_id)
+            role_list = []
+            for role in roles:
+                role_list.append({
+                    "name": role.name,
+                    "desc": role.desc
+                })
+            ret = {
+                "code": ErrCode.ERR_OK,
+                "message": "Get user information success!",
+                "user": {
+                    "fullname": user.fullname,
+                    "email": user.email,
+                    "phone": user.phone,
+                    "roles": role_list
+                }
+            }
+            return ret
+        except exception.UserNotFound:
+            ret = {
+                "code": ErrCode.USER_NOT_FOUND,
+                "message": "User not found!"
+            }
+            return ret
+        except Exception as e:
+            ret = {
+                "code": ErrCode.ERR_UNKNOWN,
+                "message": str(e)
+            }
+            return ret
+
+    def delete(self, user_id):
+        try:
+            dbi.delete_user_by_user_id(user_id=user_id)
+            ret = {
+                "code": ErrCode.ERR_OK,
+                "message": "Delete user success!"
+            }
+            return ret
+        except exception.UserNotFound:
+            ret = {
+                "code": ErrCode.USER_NOT_FOUND,
+                "message": "User not found!"
+            }
+            return ret
+        except Exception as e:
+            ret = {
+                "code": ErrCode.ERR_UNKNOWN,
+                "message": str(e)
+            }
+            return ret

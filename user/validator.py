@@ -12,3 +12,11 @@ def get_permissions_parser():
     parser = RequestParser()
     parser.add_argument("group_ids", action="append", required=True)
     return parser
+
+
+def update_create_user_info_parser():
+    parser = RequestParser()
+    parser.add_argument("fullname", type=str, required=True)
+    parser.add_argument("email", type=str, required=True)
+    parser.add_argument("phone", type=str, required=True)
+    return parser

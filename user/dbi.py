@@ -2,6 +2,7 @@ from user.models import User, UserGroupRelation, Group, GroupPermRelation, Perm
 from user import exception
 from manage import db
 from sqlalchemy.exc import IntegrityError
+import utils.check as u_check
 
 
 def select_user_by_username(username):
@@ -21,6 +22,7 @@ def select_group_by_user_id(user_id):
         join(UserGroupRelation, Group.id == UserGroupRelation.group_id). \
         join(User, UserGroupRelation.user_id == User.id). \
         filter(User.id == user_id).all()
+    db.session.close()
     return groups
 
 
@@ -33,6 +35,7 @@ def select_perms_by_group_ids(group_ids):
     perms = db.session.query(Perm). \
         join(GroupPermRelation, GroupPermRelation.perm_id == Perm.id). \
         join(Group, GroupPermRelation.group_id == Group.id).filter(Group.id.in_(group_ids)).all()
+    db.session.close()
     return perms
 
 
@@ -68,6 +71,7 @@ def select_groups_by_user_id(user_id):
         join(UserGroupRelation, Group.id == UserGroupRelation.group_id). \
         join(User, UserGroupRelation.user_id == User.id). \
         filter(User.id == user_id)
+    db.session.close()
     return groups
 
 
@@ -109,4 +113,72 @@ def select_user_list_by_page(page_size, page_num, keyword=None, role_id=None, so
         query = query.join(UserGroupRelation, User.id == UserGroupRelation.user_id).filter(
             UserGroupRelation.id == role_id)
     users = query.paginate(per_page=page_size, page=page_num, error_out=False)
+    db.session.close()
     return users
+
+
+def select_user_info_by_user_id(user_id):
+    """
+    根据用户ID查找用户信息
+    :param user_id: [int] 用户ID
+    :return:
+    """
+    user = User.query.filter_by(User.id == user_id).first()
+    if user is None:
+        raise exception.UserNotFound("User not found!")
+    db.session.close()
+    return user
+
+
+def update_user_info_by_user_id(user_id, fullname, email, phone):
+    """
+    根据用户ID更新用户信息
+    :param user_id: [int] 用户ID
+    :param fullname: [str] 姓名
+    :param email: [str] 邮箱地址
+    :param phone: [str] 电话号码
+    :return:
+    """
+    user = User.query.filter_by(User.id == user_id).first()
+    if user is None:
+        raise exception.UserNotFound("User not found!")
+    user.fullname = fullname
+    user.email = email
+    user.phone = phone
+    try:
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.close()
+
+
+def check_unique_field_exist(field_name, value):
+    """
+    检查唯一性字段是否存在
+    :param field_name: [str] 唯一性字段
+    :param value: [str] 值
+    :return: [boolean] True: 存在, False: 不存在
+    """
+    exist = u_check.check_unique_field_exit(User, field_name, value)
+    db.session.close()
+    return exist
+
+
+def delete_user_by_user_id(user_id):
+    """
+    根据用户ID删除用户
+    :param user_id: [int] 用户ID
+    :return:
+    """
+    user = User.query.filter_by(User.id == user_id).first()
+    if user is None:
+        raise exception.UserNotFound("User not found!")
+    try:
+        db.session.delete(user)
+    except Exception:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.close()

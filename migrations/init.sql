@@ -146,6 +146,7 @@ CREATE TABLE public.wx_user (
     id integer NOT NULL,
     username character varying(50) NOT NULL,
     password character varying(200) NOT NULL,
+    fullname character varying(100) DEFAULT NULL,
     is_superuser boolean,
     is_active boolean,
     email character varying(254),
