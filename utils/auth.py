@@ -1,10 +1,10 @@
-from manage import app
 from flask import request
 import jwt
 import datetime
 from functools import wraps
 from user.models import User
 from flask import session
+from core.settings import JWT_EXPIRED, SECRET_KEY
 from utils.exception import AuthException
 
 
@@ -15,8 +15,8 @@ def general_token(user):
     :return: [str]
         加密字符串
     """
-    expire_time = datetime.datetime.utcnow() + app.config.get("JWT_EXPIRED", datetime.timedelta(days=7))
-    secret_key = app.config.get("SECRET_KEY", "secret")
+    expire_time = datetime.datetime.utcnow() + JWT_EXPIRED
+    secret_key = SECRET_KEY
     if hasattr(user, User.USERNAME_FILED):
         username = getattr(user, User.USERNAME_FILED)
         payload = {
@@ -30,7 +30,7 @@ def general_token(user):
 
 
 def decode_token(token):
-    secret_key = app.config.get("SECRET_KEY", "secret")
+    secret_key = SECRET_KEY
     return jwt.decode(jwt=token, key=secret_key)
 
 

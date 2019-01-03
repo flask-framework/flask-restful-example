@@ -225,12 +225,12 @@ class User(LoginResource):
             # 查找用户信息
             user = dbi.select_user_info_by_user_id(user_id=user_id)
             # 查找用户分组信息
-            roles = dbi.select_groups_by_user_id(user_id=user_id)
-            role_list = []
-            for role in roles:
-                role_list.append({
-                    "name": role.name,
-                    "desc": role.desc
+            groups = dbi.select_groups_by_user_id(user_id=user_id)
+            group_list = []
+            for group in groups:
+                group_list.append({
+                    "name": group.name,
+                    "desc": group.desc
                 })
             ret = {
                 "code": ErrCode.ERR_OK,
@@ -239,7 +239,7 @@ class User(LoginResource):
                     "fullname": user.fullname,
                     "email": user.email,
                     "phone": user.phone,
-                    "roles": role_list
+                    "groups": group_list
                 }
             }
             return ret
@@ -268,6 +268,32 @@ class User(LoginResource):
             ret = {
                 "code": ErrCode.USER_NOT_FOUND,
                 "message": "User not found!"
+            }
+            return ret
+        except Exception as e:
+            ret = {
+                "code": ErrCode.ERR_UNKNOWN,
+                "message": str(e)
+            }
+            return ret
+
+
+class GroupList(LoginResource):
+
+    def get(self):
+        try:
+            groups = dbi.select_all_group_list()
+            group_list = []
+            for group in groups:
+                group_list.append({
+                    "id": group.id,
+                    "name": group.name,
+                    "desc": group.desc
+                })
+            ret = {
+                "code": ErrCode.ERR_OK,
+                "message": "Get role list success!",
+                "groups": group_list
             }
             return ret
         except Exception as e:

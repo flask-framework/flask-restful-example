@@ -1,4 +1,4 @@
-from manage import db
+from app import db
 from sqlalchemy import Column, String, Boolean, DateTime, Integer
 from datetime import datetime
 from werkzeug.security import check_password_hash, generate_password_hash

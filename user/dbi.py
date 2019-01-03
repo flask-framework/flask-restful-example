@@ -1,15 +1,28 @@
 from user.models import User, UserGroupRelation, Group, GroupPermRelation, Perm
 from user import exception
-from manage import db
+from app import db
 from sqlalchemy.exc import IntegrityError
-import utils.check as u_check
+from utils import check
 
 
 def select_user_by_username(username):
-    user = User.query.filter(User.username == username).first()
-    if user is None:
-        raise exception.UsernameNotFound("Username not found!")
-    return user
+    """
+    根据用户名查找用户
+    :param username: [str] 用户名
+    :raise UsernameNotFound: 用户名未找到
+    :raise Exception: 未知错误
+    :return: user 用户信息
+    """
+    try:
+        user = User.query.filter(User.username == username).first()
+        if user is None:
+            raise exception.UsernameNotFound("Username not found!")
+        return user
+    except Exception:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.close()
 
 
 def select_group_by_user_id(user_id):
@@ -101,20 +114,25 @@ def select_user_list_by_page(page_size, page_num, keyword=None, role_id=None, so
     :return: [list]
             用户列表
     """
-    query = User.query.filter()
-    if sort_name:
-        if sort_order == "descending":
-            query = query.order_by(db.desc(getattr(User, sort_name)))
-        elif sort_order == "ascending":
-            query = query.order_by(getattr(User, sort_name))
-    if keyword:
-        query = query.filter(User.fullname.like("%{}%".format(keyword)))
-    if role_id:
-        query = query.join(UserGroupRelation, User.id == UserGroupRelation.user_id).filter(
-            UserGroupRelation.id == role_id)
-    users = query.paginate(per_page=page_size, page=page_num, error_out=False)
-    db.session.close()
-    return users
+    try:
+        query = User.query.filter()
+        if sort_name:
+            if sort_order == "descending":
+                query = query.order_by(db.desc(getattr(User, sort_name)))
+            elif sort_order == "ascending":
+                query = query.order_by(getattr(User, sort_name))
+        if keyword:
+            query = query.filter(User.fullname.like("%{}%".format(keyword)))
+        if role_id:
+            query = query.join(UserGroupRelation, User.id == UserGroupRelation.user_id).filter(
+                UserGroupRelation.id == role_id)
+        users = query.paginate(per_page=page_size, page=page_num, error_out=False)
+        return users
+    except Exception:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.close()
 
 
 def select_user_info_by_user_id(user_id):
@@ -123,11 +141,16 @@ def select_user_info_by_user_id(user_id):
     :param user_id: [int] 用户ID
     :return:
     """
-    user = User.query.filter_by(User.id == user_id).first()
-    if user is None:
-        raise exception.UserNotFound("User not found!")
-    db.session.close()
-    return user
+    try:
+        user = User.query.filter(User.id == user_id).first()
+        if user is None:
+            raise exception.UserNotFound("User not found!")
+        return user
+    except Exception:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.close()
 
 
 def update_user_info_by_user_id(user_id, fullname, email, phone):
@@ -138,14 +161,17 @@ def update_user_info_by_user_id(user_id, fullname, email, phone):
     :param email: [str] 邮箱地址
     :param phone: [str] 电话号码
     :return:
+    :raises:
+        Exception 未知错误
+        UserNotFound 用户未找到
     """
-    user = User.query.filter_by(User.id == user_id).first()
-    if user is None:
-        raise exception.UserNotFound("User not found!")
-    user.fullname = fullname
-    user.email = email
-    user.phone = phone
     try:
+        user = User.query.filter(User.id == user_id).first()
+        if user is None:
+            raise exception.UserNotFound("User not found!")
+        user.fullname = fullname
+        user.email = email
+        user.phone = phone
         db.session.commit()
     except Exception:
         db.session.rollback()
@@ -160,23 +186,71 @@ def check_unique_field_exist(field_name, value):
     :param field_name: [str] 唯一性字段
     :param value: [str] 值
     :return: [boolean] True: 存在, False: 不存在
+    :raise Exception: 未知错误
     """
-    exist = u_check.check_unique_field_exit(User, field_name, value)
-    db.session.close()
-    return exist
+    try:
+        exist = check.check_unique_field_exit(User, field_name, value)
+        return exist
+    except Exception:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.close()
 
 
 def delete_user_by_user_id(user_id):
     """
     根据用户ID删除用户
     :param user_id: [int] 用户ID
-    :return:
+    :return: None
+    :raise Exception: 未知错误
     """
     user = User.query.filter_by(User.id == user_id).first()
     if user is None:
         raise exception.UserNotFound("User not found!")
     try:
         db.session.delete(user)
+    except Exception:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.close()
+
+
+# 角色（分组）接口
+def select_all_group_list():
+    try:
+        groups = Group.query.all()
+        return groups
+    except Exception:
+        db.session.rollback()
+        raise
+    finally:
+        db.session.close()
+
+
+def select_role_list_by_page(page_size, page_num, keyword=None, sort_name=None, sort_order=None):
+    """
+    分页查询角色列表
+    :param page_size: [int] 单页用户个数
+    :param page_num: [int] 页码
+    :param keyword: [str] 关键字，角色名称
+    :param sort_name: [str] 排序的字段名
+    :param sort_order: [str] 排序方式
+    :return: [list]
+            角色列表
+    """
+    try:
+        query = Group.query.filter()
+        if sort_name:
+            if sort_order == "descending":
+                query = query.order_by(db.desc(getattr(Group, sort_name)))
+            elif sort_order == "ascending":
+                query = query.order_by(getattr(Group, sort_name))
+        if keyword:
+            query = query.filter(Group.name.like("%{}%".format(keyword)))
+        groups = query.paginate(per_page=page_size, page=page_num, error_out=False)
+        return groups
     except Exception:
         db.session.rollback()
         raise
