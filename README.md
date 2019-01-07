@@ -1,3 +1,1 @@
-# wxshop-api-flask
-
-基于flask的API服务
+# flask restful 示例项目
